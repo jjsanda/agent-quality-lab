@@ -1,0 +1,8 @@
+{
+  "id": "INC-4472",
+  "title": "Payments 5xx error rate elevated",
+  "description": "The payments service is returning an elevated rate of 500 errors after the 11:00 deploy of v203, correlated with downstream gateway 503s.",
+  "service": "payments",
+  "signal": "alert: payments error_rate > 5%",
+  "received_at": "2026-06-30T11:05:00Z"
+}

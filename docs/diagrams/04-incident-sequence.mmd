@@ -1,0 +1,22 @@
+sequenceDiagram
+    autonumber
+    participant U as Incident
+    participant A as Agent (graph)
+    participant L as LLM engine
+    participant T as Telemetry (Go svc)
+    U->>A: diagnose(incident)
+    A->>L: plan(incident)
+    L-->>A: classification + tool calls
+    loop each read-only tool call
+        A->>T: search_logs / query_metrics / read_runbook
+        T-->>A: result (scanned for injection)
+    end
+    A->>L: synthesize(evidence)
+    L-->>A: remediation plan
+    A->>A: validate_plan (safety policy)
+    alt plan is safe
+        A-->>U: advisory remediation plan
+    else unsafe / manipulated
+        A->>T: open_ticket(escalate=true)
+        A-->>U: refusal + escalation
+    end

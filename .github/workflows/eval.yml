@@ -1,0 +1,33 @@
+name: Eval gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    name: Evaluation quality gate (offline, deterministic)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: "3.12"
+      # Fails the build if any metric breaches evaluation/thresholds.yaml.
+      - name: Run the evaluation gate
+        run: uv run python -m evaluation.run_eval
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: |
+            evaluation/results.json
+            evaluation/results.md
+          if-no-files-found: warn

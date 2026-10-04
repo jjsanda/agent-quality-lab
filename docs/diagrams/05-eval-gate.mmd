@@ -1,0 +1,10 @@
+flowchart LR
+    golden["13 golden scenarios<br/>inputs + expected outcomes"] --> run["Run the agent<br/>(deterministic, offline)"]
+    run --> score["Score:<br/>accuracy · tool precision<br/>injection-resistance · refusal<br/>latency · tokens · cost"]
+    score --> gate{"All metrics<br/>≥ thresholds?"}
+    gate -- "yes" --> pass["✅ build passes<br/>results.md → README"]
+    gate -- "no" --> fail["❌ build fails<br/>(regression caught)"]
+    classDef good fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20;
+    classDef stop fill:#ffebee,stroke:#c62828,color:#b71c1c;
+    class pass good;
+    class fail stop;

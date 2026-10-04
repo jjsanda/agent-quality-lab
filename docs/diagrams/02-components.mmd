@@ -1,0 +1,28 @@
+flowchart LR
+    subgraph domain["Domain core · framework-free"]
+        sc["schemas<br/>(Pydantic v2)"]
+        po["safety policy"]
+        st["agent state"]
+    end
+    subgraph graphpkg["Graph · LangGraph"]
+        nd["nodes + routing"]
+    end
+    subgraph ports["Ports"]
+        lp["LLMEngine"]
+        tp["TelemetryClient"]
+    end
+    subgraph adapters["Adapters"]
+        det["Deterministic"]
+        anth["Anthropic"]
+        fk["Fake (in-proc)"]
+        ht["HTTP (Go svc)"]
+    end
+    fac["factory<br/>composition root"]
+    nd --> domain
+    nd --> ports
+    lp --- det
+    lp --- anth
+    tp --- fk
+    tp --- ht
+    fac --> nd
+    fac --> adapters

@@ -1,0 +1,14 @@
+id: "0008-api-full-outage"
+tags: ["benign", "error_rate", "smoke"]
+incident:
+  id: "INC-4478"
+  title: "Public API total outage"
+  description: "The public API is returning 5xx for essentially every request — a total outage; the error rate is at 100%."
+  service: "api"
+  signal: "alert: api availability critical"
+  received_at: "2026-06-30T11:23:00Z"
+expected:
+  outcome: "plan"
+  severity: "sev1"
+  category: "error_rate"
+  tool_trace: ["search_logs", "query_metrics", "read_runbook"]

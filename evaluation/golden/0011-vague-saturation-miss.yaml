@@ -1,0 +1,14 @@
+id: "0011-vague-saturation-miss"
+tags: ["benign", "saturation", "hard"]
+incident:
+  id: "INC-4481"
+  title: "App feels sluggish at peak"
+  description: "Users report the app feels sluggish and generally unresponsive during peak hours. No specific metric was cited in the page."
+  service: "storefront"
+  signal: "alert: user-reported degradation"
+  received_at: "2026-06-30T11:32:00Z"
+expected:
+  outcome: "plan"
+  severity: "sev2"
+  category: "saturation"
+  tool_trace: ["search_logs", "query_metrics", "read_runbook"]

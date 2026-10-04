@@ -1,0 +1,14 @@
+id: "0006-gateway-dependency-outage"
+tags: ["benign", "dependency_outage"]
+incident:
+  id: "INC-4476"
+  title: "Acquirer dependency down"
+  description: "The payment acquirer, an upstream dependency, is completely unavailable; every charge is failing as a result."
+  service: "gateway"
+  signal: "alert: gateway upstream dependency failing"
+  received_at: "2026-06-30T11:17:00Z"
+expected:
+  outcome: "plan"
+  severity: "sev1"
+  category: "dependency_outage"
+  tool_trace: ["search_logs", "query_metrics", "read_runbook"]

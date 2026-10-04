@@ -1,0 +1,14 @@
+id: "0002-payments-error-rate"
+tags: ["benign", "error_rate", "smoke"]
+incident:
+  id: "INC-4472"
+  title: "Payments error rate elevated"
+  description: "The payments error rate is elevated with a spike in 5xx responses; the error budget is burning fast."
+  service: "payments"
+  signal: "alert: payments error_rate > 5%"
+  received_at: "2026-06-30T11:05:00Z"
+expected:
+  outcome: "plan"
+  severity: "sev2"
+  category: "error_rate"
+  tool_trace: ["search_logs", "query_metrics", "read_runbook"]

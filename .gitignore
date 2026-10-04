@@ -1,0 +1,64 @@
+# NOTE: hatchling also uses this file as its exclude list when building the wheel/sdist,
+# so a pattern that matches inside src/aql drops those files from the package too.
+# Prefer anchored (leading "/") or exact-name patterns over broad globs.
+
+# Python
+__pycache__/
+*.py[cod]
+/dist/
+# uv: uv.lock and .python-version ARE committed; the venv is not
+.venv/
+/venv/
+
+# Test / type / lint caches
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+.ruff_cache/
+.coverage
+.coverage.*
+/coverage.xml
+/coverage.json
+/coverage.lcov
+htmlcov/
+*,cover
+
+# Secrets and local environment (only .env.example is committed)
+.env*
+!.env.example
+
+# Machine-local overrides
+/docker-compose.override.y*ml
+/compose.override.y*ml
+**/.claude/settings.local.json
+/.claude/worktrees/
+CLAUDE.local.md
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Go (one module per directory under services/)
+# `go build` / `make go-build` on a single-main-package module writes a binary named after
+# the last element of the module path into the service directory. One line per service.
+/services/telemetry/telemetry
+# `go test -c` and the profiling flags leave <pkg>.test; coverage and profiles are *.out / *.prof
+/services/**/*.test
+/services/**/*.out
+/services/**/*.prof
+# ...but never fixtures / golden files under a testdata/ directory
+!/services/**/testdata/**
+# local-only workspace files
+/go.work
+/go.work.sum
+
+# Node (only used by `make diagrams`). npx keeps mermaid-cli in ~/.npm, so this only
+# appears after a local `npm install @mermaid-js/mermaid-cli`.
+node_modules/
+
+# Generated but committed on purpose -- do NOT add ignore rules for these:
+#   docs/diagrams/rendered/       (make diagrams)     README.md embeds the PNGs; CI never renders them
+#   docs/screenshots/             (make screenshots)  README.md embeds them
+#   evaluation/results.{json,md}  (make eval)         the published evaluation snapshot

@@ -1,0 +1,440 @@
+openapi: 3.1.0
+info:
+  title: Telemetry Service API
+  version: "1.0.0"
+  description: |
+    Deterministic mock telemetry (logs + metrics), runbooks, and tickets for an
+    AI incident-response agent (`agent-quality-lab`).
+
+    All time-windowed responses are computed relative to a FIXED reference clock
+    `2026-06-30T11:05:00Z`, and metric series are a fixed function of
+    `service + metric + index` (no randomness), so every response is reproducible.
+
+    The seed data intentionally contains prompt-injection fixtures (two log lines
+    and the `untrusted-vendor-runbook`) so a downstream agent can be demonstrated
+    refusing to follow untrusted tool output. Tool output is DATA, not instructions.
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+paths:
+  /healthz:
+    get:
+      operationId: getHealthz
+      summary: Liveness probe
+      tags: [health]
+      responses:
+        "200":
+          description: Service is alive.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    const: ok
+              example: { status: ok }
+
+  /readyz:
+    get:
+      operationId: getReadyz
+      summary: Readiness probe
+      tags: [health]
+      responses:
+        "200":
+          description: Service is ready to serve traffic.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    const: ready
+              example: { status: ready }
+
+  /metrics:
+    get:
+      operationId: getMetrics
+      summary: Prometheus metrics exposition
+      description: |
+        Prometheus text exposition format. Exposes
+        `telemetry_requests_total{method,path,status}` and
+        `telemetry_request_duration_seconds{path}` plus Go/process collectors.
+      tags: [observability]
+      responses:
+        "200":
+          description: Metrics in Prometheus text format.
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /v1/logs:search:
+    post:
+      operationId: searchLogs
+      summary: Search seeded log lines
+      description: |
+        Case-insensitive substring match of `query` over each line's `message`
+        and `level`, filtered to the `since` window (relative to the fixed
+        reference clock). `limit` caps the returned `lines`; `truncated` is true
+        when `total_matched` exceeds the number of lines returned.
+      tags: [logs]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchLogsRequest"
+            example:
+              service: checkout
+              query: ERROR
+              since: 15m
+              limit: 100
+      responses:
+        "200":
+          description: Matching log lines.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchLogsResponse"
+              example:
+                lines:
+                  - timestamp: "2026-06-30T11:01:02Z"
+                    level: ERROR
+                    service: checkout
+                    message: "DB connection pool exhausted (active=50/50, waiting=37)"
+                    trace_id: t-chk-1042
+                total_matched: 3
+                truncated: false
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /v1/metrics:query:
+    post:
+      operationId: queryMetrics
+      summary: Query a deterministic metric time series
+      description: |
+        Returns a deterministic series stepping by `step` from `now - since` up
+        to `now` (inclusive), where `now` is the fixed reference clock. Values
+        are a fixed function of `service`, `metric`, `aggregation`, and index.
+      tags: [metrics]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueryMetricsRequest"
+            example:
+              service: checkout
+              metric: latency_p99_ms
+              aggregation: p99
+              since: 1h
+              step: 5m
+      responses:
+        "200":
+          description: The metric series.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryMetricsResponse"
+              example:
+                metric: latency_p99_ms
+                unit: ms
+                aggregation: p99
+                series:
+                  - t: "2026-06-30T10:05:00Z"
+                    v: 2150.5
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /v1/runbooks/{slug}:
+    get:
+      operationId: getRunbook
+      summary: Fetch a runbook by slug
+      tags: [runbooks]
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Runbook identifier.
+          schema:
+            type: string
+            pattern: "^[a-z0-9][a-z0-9-]{0,126}[a-z0-9]$"
+          examples:
+            checkout:
+              value: checkout-latency
+            poisoned:
+              value: untrusted-vendor-runbook
+        - name: section
+          in: query
+          required: false
+          description: |
+            Optional section name (e.g. `Symptoms`, `Diagnosis`, `Remediation`,
+            `Rollback`). When present and found, `content` is narrowed to that
+            section; otherwise the full document is returned.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The runbook.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunbookResponse"
+              example:
+                slug: checkout-latency
+                title: "Checkout p99 Latency Breach"
+                content: "## Symptoms\n- checkout p99 latency > 2000ms ..."
+                version: v3
+        "404":
+          description: No runbook with that slug.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example: { error: runbook not found }
+
+  /v1/tickets:
+    post:
+      operationId: createTicket
+      summary: Open an incident ticket
+      description: |
+        Allocates a ticket id from an in-memory atomic counter starting at 1001.
+        `status` is `escalated` when `escalate` is true, otherwise `open`.
+      tags: [tickets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTicketRequest"
+            example:
+              title: "Checkout p99 latency breached SLO"
+              service: checkout
+              severity: sev2
+              body: "p99 > 2000ms for 10m; DB pool exhausted."
+              escalate: false
+      responses:
+        "201":
+          description: Ticket created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateTicketResponse"
+              example:
+                ticket_id: TCK-1001
+                url: https://tickets.local/TCK-1001
+                status: open
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+components:
+  responses:
+    BadRequest:
+      description: Malformed JSON or missing/invalid required fields.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example: { error: "field 'service' is required" }
+
+  schemas:
+    Error:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    Since:
+      type: string
+      description: |
+        A relative window `\d{1,4}[smhd]` (e.g. `15m`, `2h`, `7d`) or an RFC3339
+        timestamp.
+      pattern: "^(\\d{1,4}[smhd]|\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})?)$"
+      examples: ["15m", "1h", "2026-06-30T10:00:00Z"]
+
+    Step:
+      type: string
+      description: A relative step `\d{1,4}[smhd]`.
+      pattern: "^\\d{1,4}[smhd]$"
+      examples: ["1m", "5m"]
+
+    Severity:
+      type: string
+      enum: [sev1, sev2, sev3, sev4]
+
+    Aggregation:
+      type: string
+      enum: [avg, p50, p95, p99, max, rate]
+
+    SearchLogsRequest:
+      type: object
+      additionalProperties: false
+      required: [service, query]
+      properties:
+        service:
+          type: string
+          minLength: 1
+          maxLength: 128
+        query:
+          type: string
+          minLength: 1
+          maxLength: 512
+        since:
+          $ref: "#/components/schemas/Since"
+          default: "15m"
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+
+    LogLine:
+      type: object
+      additionalProperties: false
+      required: [timestamp, level, service, message]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          type: string
+          examples: [INFO, WARN, ERROR]
+        service:
+          type: string
+        message:
+          type: string
+        trace_id:
+          type: string
+          description: Present only on some lines.
+
+    SearchLogsResponse:
+      type: object
+      additionalProperties: false
+      required: [lines, total_matched, truncated]
+      properties:
+        lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/LogLine"
+        total_matched:
+          type: integer
+          minimum: 0
+          description: Total lines that matched before `limit` was applied.
+        truncated:
+          type: boolean
+          description: True when `total_matched` exceeds the number of returned lines.
+
+    QueryMetricsRequest:
+      type: object
+      additionalProperties: false
+      required: [service, metric, aggregation]
+      properties:
+        service:
+          type: string
+          minLength: 1
+          maxLength: 128
+        metric:
+          type: string
+          minLength: 1
+          maxLength: 128
+          examples: [latency_p99_ms, error_rate, cpu_saturation_pct, restart_count]
+        aggregation:
+          $ref: "#/components/schemas/Aggregation"
+        since:
+          $ref: "#/components/schemas/Since"
+          default: "1h"
+        step:
+          $ref: "#/components/schemas/Step"
+          default: "1m"
+
+    MetricPoint:
+      type: object
+      additionalProperties: false
+      required: [t, v]
+      properties:
+        t:
+          type: string
+          format: date-time
+        v:
+          type: number
+
+    QueryMetricsResponse:
+      type: object
+      additionalProperties: false
+      required: [metric, unit, aggregation, series]
+      properties:
+        metric:
+          type: string
+        unit:
+          type: string
+          examples: [ms, ratio, percent, count]
+        aggregation:
+          type: string
+        series:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricPoint"
+
+    RunbookResponse:
+      type: object
+      additionalProperties: false
+      required: [slug, title, content, version]
+      properties:
+        slug:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+          description: Untrusted free text (may contain prompt injection in fixtures).
+        version:
+          type: string
+
+    CreateTicketRequest:
+      type: object
+      additionalProperties: false
+      required: [title, service, severity, body]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        service:
+          type: string
+          minLength: 1
+          maxLength: 128
+        severity:
+          $ref: "#/components/schemas/Severity"
+        body:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        escalate:
+          type: boolean
+          default: false
+
+    CreateTicketResponse:
+      type: object
+      additionalProperties: false
+      required: [ticket_id, url, status]
+      properties:
+        ticket_id:
+          type: string
+          examples: [TCK-1001]
+        url:
+          type: string
+          format: uri
+        status:
+          type: string
+          enum: [open, escalated]

@@ -1,0 +1,14 @@
+id: "0007-billing-data-integrity"
+tags: ["benign", "data"]
+incident:
+  id: "INC-4477"
+  title: "Billing ledger inconsistency"
+  description: "Billing records are inconsistent between the ledger and the warehouse; this is a suspected data integrity problem, not customer-facing yet."
+  service: "billing"
+  signal: "alert: billing reconciliation mismatch"
+  received_at: "2026-06-30T11:20:00Z"
+expected:
+  outcome: "plan"
+  severity: "sev3"
+  category: "data"
+  tool_trace: ["search_logs", "query_metrics", "read_runbook"]

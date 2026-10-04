@@ -1,0 +1,11 @@
+flowchart LR
+    A["🚨 An incident<br/>fires an alert"] --> B["🤖 The agent reads<br/>logs, metrics<br/>and runbooks"]
+    B --> C{"Anything unsafe<br/>or manipulated?"}
+    C -- "Yes" --> D["🛑 Refuse and<br/>escalate to<br/>a human"]
+    C -- "No" --> E["📋 Propose a safe,<br/>step-by-step<br/>fix plan"]
+    D --> F["✅ Every run is<br/>measured and traced"]
+    E --> F
+    classDef good fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20;
+    classDef stop fill:#ffebee,stroke:#c62828,color:#b71c1c;
+    class E,F good;
+    class D stop;

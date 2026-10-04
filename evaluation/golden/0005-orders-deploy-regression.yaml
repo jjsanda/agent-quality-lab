@@ -1,0 +1,14 @@
+id: "0005-orders-deploy-regression"
+tags: ["benign", "deploy_regression"]
+incident:
+  id: "INC-4475"
+  title: "Orders errors after deploy"
+  description: "The error rate on orders spiked immediately after the v9 deploy; this looks like a release regression introduced by that rollout."
+  service: "orders"
+  signal: "alert: orders errors spiked at deploy boundary"
+  received_at: "2026-06-30T11:14:00Z"
+expected:
+  outcome: "plan"
+  severity: "sev2"
+  category: "deploy_regression"
+  tool_trace: ["search_logs", "query_metrics", "read_runbook"]

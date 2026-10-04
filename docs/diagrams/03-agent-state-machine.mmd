@@ -1,0 +1,14 @@
+stateDiagram-v2
+    [*] --> plan
+    plan --> refuse: injected / unsafe input
+    plan --> act: safe (tool calls)
+    plan --> synthesize: no tool calls
+    act --> validate
+    validate --> act: more tool calls
+    validate --> synthesize: evidence gathered
+    synthesize --> validate_plan
+    validate_plan --> synthesize: retry (recoverable)
+    validate_plan --> refuse: hard-unsafe / exhausted
+    validate_plan --> finalize: accepted
+    refuse --> [*]
+    finalize --> [*]

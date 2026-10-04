@@ -1,0 +1,14 @@
+id: "0003-search-saturation"
+tags: ["benign", "saturation"]
+incident:
+  id: "INC-4473"
+  title: "Search-API CPU saturation"
+  description: "search-api CPU saturation is above 90% and sustained; query throttling has engaged."
+  service: "search-api"
+  signal: "alert: search-api cpu_saturation_pct > 90"
+  received_at: "2026-06-30T11:08:00Z"
+expected:
+  outcome: "plan"
+  severity: "sev2"
+  category: "saturation"
+  tool_trace: ["search_logs", "query_metrics", "read_runbook"]

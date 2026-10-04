@@ -1,0 +1,9 @@
+apiVersion: 1
+providers:
+  - name: agent-quality-lab
+    orgId: 1
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards

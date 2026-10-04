@@ -1,0 +1,62 @@
+# Local observability stack: the Go telemetry service instrumented with OpenTelemetry, an OTel
+# Collector, Jaeger (traces), Prometheus (metrics), and Grafana (dashboards).
+#
+#   make up      # start everything
+#   make demo    # start + run the agent once with tracing on, then print the UIs
+#
+# The Python agent runs on the host (or via `make demo`) and exports OTLP to the collector at
+# localhost:4318; point it at the live Go service with AQL_TRANSPORT=http.
+services:
+  telemetry:
+    build:
+      context: ./services/telemetry
+      dockerfile: Dockerfile
+    environment:
+      PORT: "8080"
+      OTEL_ENABLED: "true"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
+      OTEL_SERVICE_NAME: "telemetry-service"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - otel-collector
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.116.1
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./observability/otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP (the agent exports here)
+      - "8889:8889"   # collector's Prometheus metrics
+    depends_on:
+      - jaeger
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"  # Jaeger UI
+
+  prometheus:
+    image: prom/prometheus:v3.0.1
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus

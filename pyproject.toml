@@ -1,0 +1,193 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-quality-lab"
+version = "0.1.0"
+description = "A production-style reliability harness for an LLM incident-response agent: a LangGraph state machine with structured outputs, guardrails, OpenTelemetry tracing, and a CI-gated evaluation."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Josef Šanda", email = "pepek.svanda@gmail.com" }]
+keywords = [
+    "llm",
+    "agent",
+    "langgraph",
+    "agent-evaluation",
+    "guardrails",
+    "prompt-injection",
+    "opentelemetry",
+    "observability",
+    "sre",
+    "incident-response",
+]
+classifiers = [
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: System :: Monitoring",
+    "Typing :: Typed",
+]
+
+# Core runtime deps are kept deliberately light so the *offline-deterministic* default stack
+# (scripted LLM + in-process fake telemetry) installs with **no API client and no API key**.
+# Real providers (Anthropic) and the OpenTelemetry exporters live behind optional extras.
+dependencies = [
+    "langgraph>=0.2.50",
+    "pydantic>=2.8",
+    "pydantic-settings>=2.4",
+    "httpx>=0.27",
+    "structlog>=24.1",
+    "prometheus-client>=0.20",
+    "tenacity>=8.5",
+    "pyyaml>=6.0.1",
+    "rich>=13.7",
+    "typing-extensions>=4.12",
+]
+
+[project.optional-dependencies]
+# --- Real LLM provider (config-only switch; offline scripted engine needs none of this) ---
+anthropic = ["anthropic>=0.40"]
+# --- OpenTelemetry traces/metrics export to the local collector (Jaeger/Prometheus/Grafana) ---
+otel = [
+    "opentelemetry-sdk>=1.26",
+    "opentelemetry-exporter-otlp-proto-http>=1.26",
+    "opentelemetry-instrumentation-httpx>=0.47b0",
+]
+# Optional tooling used only to capture the Jaeger/Grafana screenshots for the README.
+media = ["playwright>=1.45"]
+# Everything except dev tooling (handy for `uv sync --all-extras`).
+all = [
+    "anthropic>=0.40",
+    "opentelemetry-sdk>=1.26",
+    "opentelemetry-exporter-otlp-proto-http>=1.26",
+    "opentelemetry-instrumentation-httpx>=0.47b0",
+]
+
+[project.scripts]
+aql = "aql.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/jjsanda/agent-quality-lab"
+Repository = "https://github.com/jjsanda/agent-quality-lab"
+Issues = "https://github.com/jjsanda/agent-quality-lab/issues"
+
+# uv dependency group (PEP 735) for dev/test tooling, not shipped with the package.
+[dependency-groups]
+dev = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=5.0",
+    "respx>=0.21",
+    "anyio>=4.4",
+    "ruff>=0.6",
+    "black>=24.8",
+    "mypy>=1.11",
+    "pre-commit>=3.8",
+    "pip-audit>=2.7",
+    "types-PyYAML",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aql"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/aql", "README.md", "LICENSE"]
+
+# --------------------------------------------------------------------------------------
+# Tooling configuration
+# --------------------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests", "evaluation"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",    # pycodestyle
+    "F",         # pyflakes
+    "I",         # isort
+    "N",         # pep8-naming
+    "UP",        # pyupgrade
+    "B",         # flake8-bugbear
+    "C4",        # comprehensions
+    "SIM",       # simplify
+    "TID",       # tidy-imports
+    "PTH",       # use-pathlib
+    "RUF",       # ruff-specific
+]
+ignore = [
+    "E501",    # line length handled by black
+    "RUF022",  # keep __all__ grouped by category (curated) rather than alphabetised
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["N802", "N803", "S101"]
+"evaluation/**" = ["N802", "N803"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["aql"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+plugins = ["pydantic.mypy"]
+mypy_path = "src"
+explicit_package_bases = true
+namespace_packages = true
+files = ["src", "tests", "evaluation"]
+
+# LangGraph ships types, but its heavily-overloaded builder API doesn't unify with our plain
+# node callables; treat it as untyped at the boundary (the graph is covered by integration tests).
+[[tool.mypy.overrides]]
+module = ["langgraph.*"]
+follow_imports = "skip"
+ignore_missing_imports = true
+
+# Third-party libraries that ship no (or incomplete) type information.
+[[tool.mypy.overrides]]
+module = [
+    "langchain_core.*",
+    "opentelemetry.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-q --strict-markers"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "unit: fast, isolated unit tests (no network, no LLM, no graph)",
+    "integration: full-graph / adapter tests over the offline (scripted + fake) stack",
+    "eval: the golden-dataset evaluation gate (deterministic)",
+    "e2e: end-to-end CLI runs over the offline stack",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["aql"]
+omit = ["*/__main__.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "\\.\\.\\.",
+    "if __name__ == .__main__.:",
+]

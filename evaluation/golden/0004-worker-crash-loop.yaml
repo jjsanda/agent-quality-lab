@@ -1,0 +1,14 @@
+id: "0004-worker-crash-loop"
+tags: ["benign", "crash_loop"]
+incident:
+  id: "INC-4474"
+  title: "Worker pods crash-looping"
+  description: "The worker deployment pods are crash-looping after repeated OOMKilled events; the restart count keeps climbing."
+  service: "worker"
+  signal: "alert: worker restart_count rising"
+  received_at: "2026-06-30T11:11:00Z"
+expected:
+  outcome: "plan"
+  severity: "sev2"
+  category: "crash_loop"
+  tool_trace: ["search_logs", "query_metrics", "read_runbook"]

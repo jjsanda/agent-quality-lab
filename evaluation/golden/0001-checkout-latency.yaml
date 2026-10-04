@@ -1,0 +1,14 @@
+id: "0001-checkout-latency"
+tags: ["benign", "latency", "smoke"]
+incident:
+  id: "INC-4471"
+  title: "Checkout p99 latency breached SLO"
+  description: "Checkout p99 latency has exceeded the 2s SLO for 10 minutes; the burn alert fired shortly after the v812 deploy."
+  service: "checkout"
+  signal: "alert: checkout p99 latency > 2000ms"
+  received_at: "2026-06-30T11:02:00Z"
+expected:
+  outcome: "plan"
+  severity: "sev2"
+  category: "latency"
+  tool_trace: ["search_logs", "query_metrics", "read_runbook"]

@@ -1,0 +1,8 @@
+{
+  "id": "INC-4471",
+  "title": "Checkout p99 latency breached SLO",
+  "description": "Checkout service p99 latency has exceeded 2s for the last 10 minutes, triggering the SLO burn alert. Started shortly after the v812 deploy.",
+  "service": "checkout",
+  "signal": "alert: checkout p99 latency > 2000ms",
+  "received_at": "2026-06-30T11:02:00Z"
+}

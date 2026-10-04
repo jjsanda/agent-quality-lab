@@ -1,0 +1,23 @@
+flowchart TB
+    subgraph agent["Python agent · LangGraph"]
+        g["plan → act → validate →<br/>synthesize → finalize<br/>(guarded refuse path)"]
+        t["Sandboxed tools:<br/>search_logs · query_metrics<br/>read_runbook · open_ticket"]
+    end
+    llm["LLM engine<br/>deterministic ⇄ Claude"]
+    go["Go telemetry service<br/>HTTP/REST + OpenAPI<br/>seeded logs · metrics · runbooks"]
+    subgraph obs["Observability"]
+        col["OTel Collector"]
+        j["Jaeger<br/>(traces)"]
+        p["Prometheus<br/>(metrics)"]
+        gr["Grafana<br/>(dashboards)"]
+    end
+    g --> llm
+    g --> t
+    t -->|HTTP/JSON| go
+    agent -.->|OTLP| col
+    go -.->|OTLP| col
+    col --> j
+    go -->|/metrics| p
+    col --> p
+    p --> gr
+    j --> gr
