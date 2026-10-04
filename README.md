@@ -2,7 +2,7 @@
 
 > A production-style **reliability harness** for an LLM incident-response agent — built to be *measured*, not just demoed.
 
-[![CI](https://github.com/jjsanda/agent-quality-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/jjsanda/agent-quality-lab/actions/workflows/ci.yml) [![Eval gate](https://github.com/jjsanda/agent-quality-lab/actions/workflows/eval.yml/badge.svg)](https://github.com/jjsanda/agent-quality-lab/actions/workflows/eval.yml) [![CodeQL](https://github.com/jjsanda/agent-quality-lab/actions/workflows/codeql.yml/badge.svg)](https://github.com/jjsanda/agent-quality-lab/actions/workflows/codeql.yml) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/) [![Go 1.22](https://img.shields.io/badge/go-1.22-00ADD8.svg)](https://go.dev/) [![mypy strict](https://img.shields.io/badge/mypy-strict-informational.svg)](https://mypy-lang.org/) [![coverage 94%](https://img.shields.io/badge/coverage-94%25-brightgreen.svg)](#evaluation--measured-quality) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/jjsanda/agent-quality-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/jjsanda/agent-quality-lab/actions/workflows/ci.yml) [![Eval gate](https://github.com/jjsanda/agent-quality-lab/actions/workflows/eval.yml/badge.svg)](https://github.com/jjsanda/agent-quality-lab/actions/workflows/eval.yml) [![CodeQL](https://github.com/jjsanda/agent-quality-lab/actions/workflows/codeql.yml/badge.svg)](https://github.com/jjsanda/agent-quality-lab/actions/workflows/codeql.yml) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/) [![Go 1.22](https://img.shields.io/badge/go-1.22-00ADD8.svg)](https://go.dev/) [![mypy strict](https://img.shields.io/badge/mypy-strict-informational.svg)](https://mypy-lang.org/) [![coverage 94%](https://img.shields.io/badge/coverage-94%25-brightgreen.svg)](#evaluation--measured-quality) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 ---
 
@@ -181,4 +181,4 @@ Architecture Decision Records live in [`docs/adr/`](docs/adr/):
 
 ## License
 
-MIT © 2026 Josef Šanda — see [LICENSE](LICENSE).
+Apache-2.0 © 2026 Josef Šanda — see [LICENSE](LICENSE).

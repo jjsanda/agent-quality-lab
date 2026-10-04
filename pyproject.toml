@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "A production-style reliability harness for an LLM incident-response agent: a LangGraph state machine with structured outputs, guardrails, OpenTelemetry tracing, and a CI-gated evaluation."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = { text = "Apache-2.0" }
 authors = [{ name = "Josef Šanda", email = "pepek.svanda@gmail.com" }]
 keywords = [
     "llm",
@@ -25,7 +25,7 @@ keywords = [
 classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Intended Audience :: Developers",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",

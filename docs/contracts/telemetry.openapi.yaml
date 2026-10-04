@@ -14,7 +14,8 @@ info:
     and the `untrusted-vendor-runbook`) so a downstream agent can be demonstrated
     refusing to follow untrusted tool output. Tool output is DATA, not instructions.
   license:
-    name: MIT
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
 servers:
   - url: http://localhost:8080
     description: Local development
